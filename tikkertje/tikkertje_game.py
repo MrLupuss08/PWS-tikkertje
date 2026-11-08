@@ -39,11 +39,6 @@ grid[6*res:8*res+1,6*res:8*res+1] = 1
 muren=[]
 
 class Tikkertje:
-
-    #adverserial training, een model laten trainen tegen eentje met omgekeerde doel van zichzelf
-    #A* gebruiken als baseline voor de meeste codes
-
-    #Voor volgende week: paramaters bepalen en opschrijven hoe mijn spel werkt en welke keuzes ik daarmee heb gemaakt (paar pagina's)
     def __init__(self):
 
         self.muur=pygame.Rect(0,0,res,res)
@@ -73,26 +68,6 @@ class Tikkertje:
         scherm.blit(lettertype2.render(str(round(self.score,2)),True,WIT),(10,Scherm_lengte-30))
         pygame.display.flip() #Laat scherm nieuwst aanpassingen zien
 
-    def engine_normaal(self, coordinaten,richting):
-        self.snelheid=2
-        self.x_oud = coordinaten.x
-        self.y_oud = coordinaten.y
-        if richting[0]=="West" and coordinaten.x!=0:
-            coordinaten.x-=self.snelheid
-        if richting[0]=="Oost" and coordinaten.x!=Scherm_breedte-30:
-            coordinaten.x+=self.snelheid
-        if richting[0]=="Noord" and coordinaten.y!=0:
-            coordinaten.y-=self.snelheid
-        if richting[0]=="Zuid" and coordinaten.y!=Scherm_lengte-60:
-            coordinaten.y+=self.snelheid
-
-        for i in range(len(muren)):
-            self.muur.x,self.muur.y=muren[i]
-            self.muur.x=self.muur.x*res
-            self.muur.y=self.muur.y*res
-            if coordinaten.colliderect(self.muur):
-                coordinaten.x,coordinaten.y=self.x_oud,self.y_oud
-
     def engine_cumulatief(self, coordinaten,richting):    #coordinaten = renner of jager (zie keys_movement2, daarna running loop)
         self.snelheid=0.15
         self.x_oud = coordinaten.x
@@ -115,12 +90,12 @@ class Tikkertje:
 
         if coordinaten.x<0:
             coordinaten.x=0
-        if coordinaten.x>Scherm_breedte-20:
-            coordinaten.x=Scherm_breedte-20
+        if coordinaten.x>Scherm_breedte-30:
+            coordinaten.x=Scherm_breedte-30
         if coordinaten.y<0:
             coordinaten.y=0
-        if coordinaten.y>Scherm_lengte-50:
-            coordinaten.y=Scherm_lengte-50
+        if coordinaten.y>Scherm_lengte-60:
+            coordinaten.y=Scherm_lengte-60
         for i in range(len(muren)):
             self.muur.x,self.muur.y=muren[i]
             self.muur.x=self.muur.x*res
@@ -128,21 +103,7 @@ class Tikkertje:
             if coordinaten.colliderect(self.muur):
                 coordinaten.x,coordinaten.y=self.x_oud,self.y_oud
 
-    #def keys_movement1(coordinaten,richting):
-    #    keys=pygame.key.get_pressed()
-    #    if keys[pygame.K_LEFT]:
-    #        self.richting_r[0]="West"
-    #    elif keys[pygame.K_RIGHT]:
-    #        self.richting_r[0]="Oost"
-    #    elif keys[pygame.K_UP]:
-    #        self.richting_r[0]="Noord"
-    #    elif keys[pygame.K_DOWN]:
-    #        self.richting_r[0]="Zuid"
-    #    else:
-    #        self.richting_r[0]="X"
-    #    self.engine_normaal(coordinaten,richting)
-
-    def keys_movement2(self, coordinaten,richting): #self.keys is hier een output van een speler
+    def keys_movement(self, coordinaten,richting): #self.keys is hier een output van een speler
         self.keys=pygame.key.get_pressed()
         richting[2]=richting[0]
         if self.keys[pygame.K_LEFT] and coordinaten.x!=0:
@@ -157,47 +118,50 @@ class Tikkertje:
             richting[0]="X"
         self.engine_cumulatief(coordinaten,richting)
 
-    #def algoritme1(coordinaten,richting,target):
-    #    a=target.x-coordinaten.x
-    #    if a==0: a=0.0001
-    #    b=target.y-coordinaten.y
-    #    if b==0: b=0.0001
-    #    c=abs(a/b)
-    #    if c>1 and a>0:
-    #        richting[0]="Oost"
-    #    elif c>1 and a<0:
-    #        richting[0]="West"
-     #   elif c<1 and b>0:
-    #        richting[0]="Zuid"
-    #    elif c<1 and b<0:
-     #       richting[0]="Noord"
-    #    elif c==1 and b<0:
-    #        richting[0]="Noord"
-    #    elif c==1 and b>0:
-    #        richting[0]="Zuid"
-    #    self.engine_normaal(coordinaten,richting)
-
-
-    def algoritme2(self, coordinaten,richting,target):
-        richting[2]=richting[0]
-        a=target.x-coordinaten.x
+    def algoritme_1(self, pos_self,richting_self,pos_target,richting_target):
+        richting_self[2]=richting_self[0]
+        a=pos_target.x-pos_self.x
         if a==0: a=0.0001
-        b=target.y-coordinaten.y
+        b=pos_target.y-pos_self.y
         if b==0: b=0.0001
         c=abs(a/b)
         if c>1 and a>0:
-            richting[0]="Oost"
+            richting_self[0]="Oost"
         elif c>1 and a<0:
-            richting[0]="West"
+            richting_self[0]="West"
         elif c<1 and b>0:
-            richting[0]="Zuid"
+            richting_self[0]="Zuid"
         elif c<1 and b<0:
-            richting[0]="Noord"
+            richting_self[0]="Noord"
         elif c==1 and b<0:
-            richting[0]="Noord"
+            richting_self[0]="Noord"
         elif c==1 and b>0:
-            richting[0]="Zuid"
-        self.engine_cumulatief(coordinaten,richting)
+            richting_self[0]="Zuid"
+        self.engine_cumulatief(pos_self,richting_self)
+
+    def algoritme_2(self,pos_self,richting_self,pos_target,richting_target):
+        richting_self[2]=richting_self[0]
+        route=[]
+        target=pos_target.copy()
+        s=richting_target.copy()
+        self.engine_cumulatief(target,s)
+
+        if pos_self.x==pos_target.x or pos_self.y==pos_target.y:
+            route.append((target.x,target.y))
+        else:
+            breedte=(pos_self.x,pos_target.y)
+            hoogte=(pos_target.x,pos_self.y)
+            if pos_target.x-pos_self.x>pos_target.y-pos_self.y:
+                route.append(hoogte)
+            else: route.append(breedte)
+
+        rx,ry=route[0]
+        if rx>pos_self.x and ry==pos_self.y: richting_self[0]="Oost"
+        elif rx<pos_self.x and ry==pos_self.y: richting_self[0]="West"
+        elif rx==pos_self.x and ry>pos_self.y: richting_self[0]="Zuid"
+        elif rx==pos_self.x and ry<pos_self.y: richting_self[0]="Noord"
+        else: richting_self[0]="X"
+        self.engine_cumulatief(pos_self,richting_self)
 
     def agent_movement(self, action, coordinaten, richting):    #hier moet de output dus van de agent zijn
         richting[2]=richting[0]
@@ -222,10 +186,10 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:  # Als je op het kruisje klikt
                 running=False
 
-        tikkertje.keys_movement2(tikkertje.renner,tikkertje.richting_r)   #
+        tikkertje.keys_movement(tikkertje.renner,tikkertje.richting_r)   #
         #self.algoritme2(self.renner,self.richting_j,self.jager)
 
-        tikkertje.algoritme2(tikkertje.jager,tikkertje.richting_j,tikkertje.renner)
+        tikkertje.algoritme_2(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
         
         tikkertje.score+=1/60
         tikkertje.Beeld(scherm)
