@@ -10,10 +10,10 @@ bord=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
       0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
-      0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
-      0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,
-      0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,
-      0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,
+      0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
       0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
       0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
@@ -35,7 +35,6 @@ WIT=(255,255,255)
 ACHTERGROND_KLEUR=(50, 150, 255)
 
 grid = np.zeros((15*res,15*res))
-grid[6*res:8*res+1,6*res:8*res+1] = 1
 muren=[]
 
 class Tikkertje:
@@ -48,10 +47,14 @@ class Tikkertje:
                 self.y=i//math.sqrt(len(bord))
                 muren.append((self.x,self.y))
 
+        for i in range(len(muren)):
+            self.x,self.y=muren[i]
+            grid[int(self.x*res):int((self.x+1)*res+1),int(self.y*res):int((self.y+1)*res+1)] = 1 #dit komt alleen overeen als de map gespiegeld is over de y-as in het midden, nu is dat zo dus geen zorgen
+
         self.klok = pygame.time.Clock() #snelheid van spel (fps)
 
         self.renner=pygame.Rect(20,20,30,30)
-        self.jager=pygame.Rect(Scherm_breedte-30,Scherm_lengte-60,30,30)
+        self.jager=pygame.Rect(Scherm_breedte-40,Scherm_lengte-70,30,30)
         self.score=0
         self.snelheid=1
         self.richting_r=["Noord",0,"X"]
@@ -139,21 +142,95 @@ class Tikkertje:
             richting_self[0]="Zuid"
         self.engine_cumulatief(pos_self,richting_self)
 
+
+
+
+
+
+
+
+    def muurchecken(self,punt1,punt2):
+        punt1_x,punt1_y=punt1
+        punt2_x,punt2_y=punt2
+        punt1_x=int(punt1_x/res)
+        punt1_y=int(punt1_y/res)
+        punt2_x=int(punt2_x/res)
+        punt2_y=int(punt2_y/res)
+        wissel=False
+        for i in range(abs(punt1_x+punt1_y-punt2_x-punt2_y)):
+            for j in range(2):
+                if punt1_x==punt2_x and punt1_y>punt2_y:
+                    if muren.count((punt1_x+j,punt1_y-i))==1:
+                        wissel=True
+                        print("Muur")
+
+                elif punt1_x==punt2_x and punt1_y<punt2_y:
+                    if muren.count((punt1_x+j,punt1_y+i))==1:
+                        wissel=True
+                        print("Muur")
+
+
+                elif punt1_x>punt2_x and punt1_y==punt2_y:
+                    if muren.count((punt1_x-i,punt1_y+j))==1:
+                        wissel=True
+                        print("Muur")
+
+                elif punt1_x<punt2_x and punt1_y==punt2_y:
+                    if muren.count((punt1_x+i,punt1_y+j))==1:
+                        wissel=True
+                        print("Muur")
+
+
+        if wissel==True: return "nee"
+        else: return "ja"
+
+
     def algoritme_2(self,pos_self,richting_self,pos_target,richting_target):
         richting_self[2]=richting_self[0]
         route=[]
+        niet_nemen=[]
         target=pos_target.copy()
         s=richting_target.copy()
         self.engine_cumulatief(target,s)
 
-        if pos_self.x==pos_target.x or pos_self.y==pos_target.y:
-            route.append((target.x,target.y))
-        else:
-            breedte=(pos_self.x,pos_target.y)
-            hoogte=(pos_target.x,pos_self.y)
-            if pos_target.x-pos_self.x>pos_target.y-pos_self.y:
-                route.append(hoogte)
-            else: route.append(breedte)
+        breedte=(pos_self.x,pos_target.y)
+        hoogte=(pos_target.x,pos_self.y)
+        goedkeuren=True
+        while goedkeuren:
+            if pos_self.x==pos_target.x or pos_self.y==pos_target.y:
+                route.append((target.x,target.y))
+            else:
+                breedte=(pos_self.x,pos_target.y)
+                hoogte=(pos_target.x,pos_self.y)
+                if abs(pos_target.x-pos_self.x)<abs(pos_target.y-pos_self.y) and niet_nemen.count(hoogte)!=1:
+                    route.append(hoogte)
+                if abs(pos_target.x-pos_self.x)<abs(pos_target.y-pos_self.y) and not niet_nemen.count(hoogte)!=1 and niet_nemen.count(breedte)!=1:
+                    route.append(breedte)
+                elif abs(pos_target.x-pos_self.x)>=abs(pos_target.y-pos_self.y) and niet_nemen.count(breedte)!=1: 
+                    route.append(breedte)
+                elif abs(pos_target.x-pos_self.x)>=abs(pos_target.y-pos_self.y) and not niet_nemen.count(breedte)!=1:# and niet_nemen.count(hoogte)!=1: 
+                    route.append(hoogte)
+                else: 
+                    route.append((pos_self.x,pos_self.y-5))
+#                if pos_target.x<pos_self.x and pos_target.y<pos_self.y:
+#                    if route[0]==hoogte: route[0]=breedte
+#                    if route[0]==breedte: route[0]=hoogte
+                route.append((target.x,target.y))
+            teller=0
+            for i in range(len(route)):
+                if i==0:
+                    if self.muurchecken((pos_self.x,pos_self.y),route[i])=="ja":
+                        teller+=1
+                else:
+                    if self.muurchecken(route[i-1],route[i])=="ja":
+                        teller+=1
+            if teller==len(route):
+                goedkeuren=False
+            else:
+                niet_nemen.append(route[0])
+                route=[]
+                print("Muur!")
+
 
         rx,ry=route[0]
         if rx>pos_self.x and ry==pos_self.y: richting_self[0]="Oost"
@@ -162,6 +239,16 @@ class Tikkertje:
         elif rx==pos_self.x and ry<pos_self.y: richting_self[0]="Noord"
         else: richting_self[0]="X"
         self.engine_cumulatief(pos_self,richting_self)
+
+
+
+
+
+
+
+
+
+
 
     def agent_movement(self, action, coordinaten, richting):    #hier moet de output dus van de agent zijn
         richting[2]=richting[0]
@@ -191,6 +278,13 @@ if __name__ == '__main__':
 
         tikkertje.algoritme_2(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
         
+        keys=pygame.key.get_pressed()
+        if keys[pygame.K_a]:
+            muren.append((5,13))
+            muren.append((5,14))
+
+
+
         tikkertje.score+=1/60
         tikkertje.Beeld(scherm)
         if tikkertje.jager.colliderect(tikkertje.renner):
