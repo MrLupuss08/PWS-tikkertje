@@ -8,15 +8,15 @@ res=30
 bord=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
-      0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
-      0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,
+      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
+      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
+      0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
-      0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
-      0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
+      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
+      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
+      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
@@ -188,56 +188,71 @@ class Tikkertje:
     def algoritme_2(self,pos_self,richting_self,pos_target,richting_target):
         richting_self[2]=richting_self[0]
         route=[]
+        geen_route=False
         niet_nemen=[]
+        #voorspelling maken waar de ander zal zijn
         target=pos_target.copy()
         s=richting_target.copy()
         self.engine_cumulatief(target,s)
 
-        breedte=(pos_self.x,pos_target.y)
-        hoogte=(pos_target.x,pos_self.y)
+        pogingen=0
+        breedte=(pos_self.x,target.y)
+        hoogte=(target.x,pos_self.y)
         goedkeuren=True
         while goedkeuren:
-            if pos_self.x==pos_target.x or pos_self.y==pos_target.y:
+            pogingen+=1
+            geen_route=False
+            if pos_self.x==target.x or pos_self.y==target.y:
                 route.append((target.x,target.y))
             else:
-                breedte=(pos_self.x,pos_target.y)
-                hoogte=(pos_target.x,pos_self.y)
-                if abs(pos_target.x-pos_self.x)<abs(pos_target.y-pos_self.y) and niet_nemen.count(hoogte)!=1:
-                    route.append(hoogte)
-                if abs(pos_target.x-pos_self.x)<abs(pos_target.y-pos_self.y) and not niet_nemen.count(hoogte)!=1 and niet_nemen.count(breedte)!=1:
-                    route.append(breedte)
-                elif abs(pos_target.x-pos_self.x)>=abs(pos_target.y-pos_self.y) and niet_nemen.count(breedte)!=1: 
-                    route.append(breedte)
-                elif abs(pos_target.x-pos_self.x)>=abs(pos_target.y-pos_self.y) and not niet_nemen.count(breedte)!=1:# and niet_nemen.count(hoogte)!=1: 
-                    route.append(hoogte)
-                else: 
-                    route.append((pos_self.x,pos_self.y-5))
-#                if pos_target.x<pos_self.x and pos_target.y<pos_self.y:
-#                    if route[0]==hoogte: route[0]=breedte
-#                    if route[0]==breedte: route[0]=hoogte
-                route.append((target.x,target.y))
-            teller=0
-            for i in range(len(route)):
-                if i==0:
-                    if self.muurchecken((pos_self.x,pos_self.y),route[i])=="ja":
-                        teller+=1
+                breedte=(pos_self.x,target.y)
+                hoogte=(target.x,pos_self.y)
+                if pogingen==1:
+                    if abs(target.x-pos_self.x)<abs(target.y-pos_self.y):
+                        route.append(hoogte)
+                    elif abs(target.x-pos_self.x)>abs(target.y-pos_self.y): 
+                        route.append(breedte)
+                    elif richting_self[0]=="Noord" or richting_self[0]=="Zuid":
+                        route.append(breedte)
+                    elif richting_self[0]=="Oost" or richting_self[0]=="West":
+                        route.append(hoogte)
+                    route.append((target.x,target.y))
+                elif pogingen==2:
+                    if niet_nemen[0]==breedte:
+                        route.append(hoogte)
+                    if niet_nemen[0]==hoogte:
+                        route.append(breedte)
+                    route.append((target.x,target.y))
+                elif pogingen>=3:
+                    geen_route=True
+
+            if geen_route==False:    
+                teller=0
+                for i in range(len(route)):
+                    if i==0:
+                        if self.muurchecken((pos_self.x,pos_self.y),route[i])=="ja":
+                            teller+=1
+                    else:
+                        if self.muurchecken(route[i-1],route[i])=="ja":
+                            teller+=1
+                if teller==len(route):
+                    goedkeuren=False
                 else:
-                    if self.muurchecken(route[i-1],route[i])=="ja":
-                        teller+=1
-            if teller==len(route):
+                    niet_nemen.append(route[0])
+                    route=[]
+                    print("Muur!")
+            elif geen_route==True:
                 goedkeuren=False
-            else:
-                niet_nemen.append(route[0])
-                route=[]
-                print("Muur!")
 
-
-        rx,ry=route[0]
-        if rx>pos_self.x and ry==pos_self.y: richting_self[0]="Oost"
-        elif rx<pos_self.x and ry==pos_self.y: richting_self[0]="West"
-        elif rx==pos_self.x and ry>pos_self.y: richting_self[0]="Zuid"
-        elif rx==pos_self.x and ry<pos_self.y: richting_self[0]="Noord"
-        else: richting_self[0]="X"
+        if geen_route==False:
+            rx,ry=route[0]
+            if rx>pos_self.x and ry==pos_self.y: richting_self[0]="Oost"
+            elif rx<pos_self.x and ry==pos_self.y: richting_self[0]="West"
+            elif rx==pos_self.x and ry>pos_self.y: richting_self[0]="Zuid"
+            elif rx==pos_self.x and ry<pos_self.y: richting_self[0]="Noord"
+            else: richting_self[0]="X"
+        elif geen_route==True:
+            richting_self[0]=richting_self[2] #Ga gewoon dezelfde kant op
         self.engine_cumulatief(pos_self,richting_self)
 
 
