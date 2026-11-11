@@ -18,8 +18,8 @@ bord=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
       0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
+      0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,]
 pygame.display.set_caption("Tikkertje") #naam van systeem
 Scherm_breedte=math.sqrt(len(bord))*res     #buiten class
 Scherm_lengte=math.sqrt(len(bord))*res+30
@@ -162,23 +162,19 @@ class Tikkertje:
                 if punt1_x==punt2_x and punt1_y>punt2_y:
                     if muren.count((punt1_x+j,punt1_y-i))==1:
                         wissel=True
-                        print("Muur")
 
                 elif punt1_x==punt2_x and punt1_y<punt2_y:
                     if muren.count((punt1_x+j,punt1_y+i))==1:
                         wissel=True
-                        print("Muur")
 
 
                 elif punt1_x>punt2_x and punt1_y==punt2_y:
                     if muren.count((punt1_x-i,punt1_y+j))==1:
                         wissel=True
-                        print("Muur")
 
                 elif punt1_x<punt2_x and punt1_y==punt2_y:
                     if muren.count((punt1_x+i,punt1_y+j))==1:
                         wissel=True
-                        print("Muur")
 
 
         if wissel==True: return "nee"
@@ -195,12 +191,14 @@ class Tikkertje:
         s=richting_target.copy()
         self.engine_cumulatief(target,s)
 
-        pogingen=0
+        pogingen=1
+        tellertje=0
         breedte=(pos_self.x,target.y)
         hoogte=(target.x,pos_self.y)
         goedkeuren=True
+        binnendoor=False
         while goedkeuren:
-            pogingen+=1
+            
             geen_route=False
             if pos_self.x==target.x or pos_self.y==target.y:
                 route.append((target.x,target.y))
@@ -217,14 +215,71 @@ class Tikkertje:
                     elif richting_self[0]=="Oost" or richting_self[0]=="West":
                         route.append(hoogte)
                     route.append((target.x,target.y))
-                elif pogingen==2:
+                    pogingen+=1
+
+                elif pogingen==2:    
                     if niet_nemen[0]==breedte:
                         route.append(hoogte)
                     if niet_nemen[0]==hoogte:
                         route.append(breedte)
                     route.append((target.x,target.y))
-                elif pogingen>=3:
-                    geen_route=True
+                    pogingen+=1
+                    if abs(target.x-pos_self.x)<abs(target.y-pos_self.y): prio="hoog"
+                    else: prio="breed"
+                
+                elif pogingen==3:
+                    hbh1=(pos_self.x,pos_self.y-pogingen*res)
+                    hbh2=(pos_self.x,pos_self.y+pogingen*res)
+                    bhb1=(pos_self.x-tellertje*res,pos_self.y)
+                    bhb2=(pos_self.x+tellertje*res,pos_self.y)
+
+                    if prio=="hoog" and bhb2[0]<scherm_breedte and bhb1[0]*res>0:
+                        if pos_self.x>target.x:
+                            route.append[bhb1]
+                            route.append[(pos_self.x-tellertje*res,target.y)]
+                        elif pos_self.y<target.y:
+                            route.append[bhb2]
+                            route.append[(pos_self.x+tellertje*res,target.y)]
+                        tellertje+=1
+                    elif prio=="breed" and hbh2[0]<Scherm_lengte and hbh1[0]*res>0:
+                        if pos_self.y>target.y:
+                            route.append(hbh1)
+                            route.append((target.x,pos_self.y-tellertje*res))
+                        elif pos_self.y<target.y:
+                            route.append(hbh2)
+                            route.append((target.x,pos_self.y+tellertje*res))
+                        tellertje+=1
+                    else: 
+                        pogingen+=1
+                        tellertje=0
+
+                elif pogingen==4:
+                    hbh1=(pos_self.x,pos_self.y-pogingen*res)
+                    hbh2=(pos_self.x,pos_self.y+pogingen*res)
+                    bhb1=(pos_self.x-tellertje*res,pos_self.y)
+                    bhb2=(pos_self.x+tellertje*res,pos_self.y)
+
+                    if prio=="breed" and bhb2[0]<scherm_breedte and bhb1[0]*res>0:
+                        if pos_self.x>target.x:
+                            route.append(bhb1)
+                            route.append((pos_self.x-tellertje*res,target.y))
+                        elif pos_self.y<target.y:
+                            route.append[bhb2]
+                            route.append((pos_self.x+tellertje*res,target.y))
+                        tellertje+=1
+                    elif prio=="hoog" and hbh2[0]<Scherm_lengte and hbh1[0]*res>0:
+                        if pos_self.y>target.y:
+                            route.append[hbh1]
+                            route.append[(target.x,pos_self.y-tellertje*res)]
+                        elif pos_self.y<target.y:
+                            route.append[hbh2]
+                            route.append((target.x,pos_self.y+tellertje*res))
+                        tellertje+=1
+                    else: 
+                        pogingen+=1
+                        tellertje=0
+
+                else: geen_route=True
 
             if geen_route==False:    
                 teller=0
@@ -295,8 +350,8 @@ if __name__ == '__main__':
         
         keys=pygame.key.get_pressed()
         if keys[pygame.K_a]:
-            muren.append((5,13))
-            muren.append((5,14))
+            muren.append((6,13))
+            muren.append((6,14))
 
 
 
