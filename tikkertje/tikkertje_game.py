@@ -121,27 +121,6 @@ class Tikkertje:
             richting[0]="X"
         self.engine_cumulatief(pos_self,richting)
 
-    def algoritme_1(self, pos_self,richting_self,pos_target,richting_target):
-        richting_self[2]=richting_self[0]
-        a=pos_target.x-pos_self.x
-        if a==0: a=0.0001
-        b=pos_target.y-pos_self.y
-        if b==0: b=0.0001
-        c=abs(a/b)
-        if c>1 and a>0:
-            richting_self[0]="Oost"
-        elif c>1 and a<0:
-            richting_self[0]="West"
-        elif c<1 and b>0:
-            richting_self[0]="Zuid"
-        elif c<1 and b<0:
-            richting_self[0]="Noord"
-        elif c==1 and b<0:
-            richting_self[0]="Noord"
-        elif c==1 and b>0:
-            richting_self[0]="Zuid"
-        self.engine_cumulatief(pos_self,richting_self)
-
 
 
 
