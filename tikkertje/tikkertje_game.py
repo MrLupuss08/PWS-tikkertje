@@ -5,7 +5,7 @@ import math
 
 pygame.init() #pygame opstarten
 res=30
-bord=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+bord=[4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
@@ -15,11 +15,11 @@ bord=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,]
+      0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,
+      0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,
+      0,0,1,1,1,1,0,0,0,1,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
 pygame.display.set_caption("Tikkertje") #naam van systeem
 Scherm_breedte=math.sqrt(len(bord))*res     #buiten class
 Scherm_lengte=math.sqrt(len(bord))*res+30
@@ -53,8 +53,8 @@ class Tikkertje:
 
         self.klok = pygame.time.Clock() #snelheid van spel (fps)
 
-        self.renner=pygame.Rect(20,20,30,30)
-        self.jager=pygame.Rect(Scherm_breedte-40,Scherm_lengte-70,30,30)
+        self.renner=pygame.Rect(bord.index(4)%15*30,bord.index(4)//15*30,30,30)
+        self.jager=pygame.Rect(bord.index(5)%15*30,bord.index(5)//15*30,30,30)
         self.score=0
         self.snelheid=1
         self.richting_r=["Noord",0,"X"]
@@ -106,20 +106,20 @@ class Tikkertje:
             if coordinaten.colliderect(self.muur):
                 coordinaten.x,coordinaten.y=self.x_oud,self.y_oud
 
-    def keys_movement(self, coordinaten,richting): #self.keys is hier een output van een speler
+    def keys_movement(self, pos_self,richting): #self.keys is hier een output van een speler
         self.keys=pygame.key.get_pressed()
         richting[2]=richting[0]
-        if self.keys[pygame.K_LEFT] and coordinaten.x!=0:
+        if self.keys[pygame.K_LEFT] and pos_self.x!=0:
             richting[0]="West"
-        elif self.keys[pygame.K_RIGHT] and coordinaten.x!=Scherm_breedte-20:
+        elif self.keys[pygame.K_RIGHT] and pos_self.x!=Scherm_breedte-20:
             richting[0]="Oost"
-        elif self.keys[pygame.K_UP] and coordinaten.y!=0:
+        elif self.keys[pygame.K_UP] and pos_self.y!=0:
             richting[0]="Noord"
-        elif self.keys[pygame.K_DOWN] and coordinaten.y!=Scherm_lengte-50:
+        elif self.keys[pygame.K_DOWN] and pos_self.y!=Scherm_lengte-50:
             richting[0]="Zuid"
         else:
             richting[0]="X"
-        self.engine_cumulatief(coordinaten,richting)
+        self.engine_cumulatief(pos_self,richting)
 
     def algoritme_1(self, pos_self,richting_self,pos_target,richting_target):
         richting_self[2]=richting_self[0]
@@ -188,8 +188,8 @@ class Tikkertje:
         niet_nemen=[]
         #voorspelling maken waar de ander zal zijn
         target=pos_target.copy()
-        s=richting_target.copy()
-        self.engine_cumulatief(target,s)
+        #s=richting_target.copy()
+        #self.engine_cumulatief(target,s)
 
         pogingen=1
         tellertje=0
@@ -206,11 +206,7 @@ class Tikkertje:
                 breedte=(pos_self.x,target.y)
                 hoogte=(target.x,pos_self.y)
                 if pogingen==1:
-                    if abs(target.x-pos_self.x)<abs(target.y-pos_self.y):
-                        route.append(hoogte)
-                    elif abs(target.x-pos_self.x)>abs(target.y-pos_self.y): 
-                        route.append(breedte)
-                    elif richting_self[0]=="Noord" or richting_self[0]=="Zuid":
+                    if richting_self[0]=="Noord" or richting_self[0]=="Zuid":
                         route.append(breedte)
                     elif richting_self[0]=="Oost" or richting_self[0]=="West":
                         route.append(hoogte)
@@ -224,8 +220,8 @@ class Tikkertje:
                         route.append(breedte)
                     route.append((target.x,target.y))
                     pogingen+=1
-                    if abs(target.x-pos_self.x)<abs(target.y-pos_self.y): prio="hoog"
-                    else: prio="breed"
+                    if richting_self[0]=="Noord" or richting_self[0]=="Zuid": prio="hoog"
+                    elif richting_self[0]=="Oost" or richting_self[0]=="West": prio="breed"
                 
                 elif pogingen==3:
                     hbh1=(pos_self.x,pos_self.y-pogingen*res)
@@ -233,13 +229,13 @@ class Tikkertje:
                     bhb1=(pos_self.x-tellertje*res,pos_self.y)
                     bhb2=(pos_self.x+tellertje*res,pos_self.y)
 
-                    if prio=="hoog" and bhb2[0]<scherm_breedte and bhb1[0]*res>0:
+                    if prio=="hoog" and bhb2[0]<Scherm_breedte and bhb1[0]*res>0:
                         if pos_self.x>target.x:
-                            route.append[bhb1]
-                            route.append[(pos_self.x-tellertje*res,target.y)]
+                            route.append(bhb1)
+                            route.append((pos_self.x-tellertje*res,target.y))
                         elif pos_self.y<target.y:
-                            route.append[bhb2]
-                            route.append[(pos_self.x+tellertje*res,target.y)]
+                            route.append(bhb2)
+                            route.append((pos_self.x+tellertje*res,target.y))
                         tellertje+=1
                     elif prio=="breed" and hbh2[0]<Scherm_lengte and hbh1[0]*res>0:
                         if pos_self.y>target.y:
@@ -259,7 +255,7 @@ class Tikkertje:
                     bhb1=(pos_self.x-tellertje*res,pos_self.y)
                     bhb2=(pos_self.x+tellertje*res,pos_self.y)
 
-                    if prio=="breed" and bhb2[0]<scherm_breedte and bhb1[0]*res>0:
+                    if prio=="breed" and bhb2[0]<Scherm_breedte and bhb1[0]*res>0:
                         if pos_self.x>target.x:
                             route.append(bhb1)
                             route.append((pos_self.x-tellertje*res,target.y))
@@ -290,9 +286,9 @@ class Tikkertje:
                     else:
                         if self.muurchecken(route[i-1],route[i])=="ja":
                             teller+=1
-                if teller==len(route):
+                if teller==len(route) and len(route)>0:
                     goedkeuren=False
-                else:
+                elif teller!=len(route) and len(route)>0:
                     niet_nemen.append(route[0])
                     route=[]
                     print("Muur!")
@@ -308,6 +304,9 @@ class Tikkertje:
             else: richting_self[0]="X"
         elif geen_route==True:
             richting_self[0]=richting_self[2] #Ga gewoon dezelfde kant op
+        print("Richting renner:", richting_target[0])
+        print("Richting jager:", richting_self[0])
+        print("----------------")
         self.engine_cumulatief(pos_self,richting_self)
 
 
