@@ -10,16 +10,16 @@ bord=[4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
       0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,
+      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,
-      0,0,1,1,1,1,0,0,0,1,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
+      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
+      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
+      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,]
 pygame.display.set_caption("Tikkertje") #naam van systeem
 Scherm_breedte=math.sqrt(len(bord))*res     #buiten class
 Scherm_lengte=math.sqrt(len(bord))*res+30
@@ -121,13 +121,6 @@ class Tikkertje:
             richting[0]="X"
         self.engine_cumulatief(pos_self,richting)
 
-
-
-
-
-
-
-
     def muurchecken(self,punt1,punt2):
         punt1_x,punt1_y=punt1
         punt2_x,punt2_y=punt2
@@ -135,9 +128,12 @@ class Tikkertje:
         punt1_y=int(punt1_y/res)
         punt2_x=int(punt2_x/res)
         punt2_y=int(punt2_y/res)
+        if punt1_x==punt2_x and punt1_x/res==int(punt1_x/res):
+            vakjes=1
+        else: vakjes=2
         wissel=False
         for i in range(abs(punt1_x+punt1_y-punt2_x-punt2_y)):
-            for j in range(2):
+            for j in range(vakjes):
                 if punt1_x==punt2_x and punt1_y>punt2_y:
                     if muren.count((punt1_x+j,punt1_y-i))==1:
                         wissel=True
@@ -160,15 +156,18 @@ class Tikkertje:
         else: return "ja"
 
 
-    def algoritme_2(self,pos_self,richting_self,pos_target,richting_target):
+
+
+
+    def algoritme_j(self,pos_self,richting_self,pos_target,richting_target):
         richting_self[2]=richting_self[0]
         route=[]
         geen_route=False
         niet_nemen=[]
         #voorspelling maken waar de ander zal zijn
         target=pos_target.copy()
-        #s=richting_target.copy()
-        #self.engine_cumulatief(target,s)
+        s=richting_target.copy()
+        self.engine_cumulatief(target,s)
 
         pogingen=1
         tellertje=0
@@ -200,11 +199,11 @@ class Tikkertje:
                     route.append((target.x,target.y))
                     pogingen+=1
                     if richting_self[0]=="Noord" or richting_self[0]=="Zuid": prio="hoog"
-                    elif richting_self[0]=="Oost" or richting_self[0]=="West": prio="breed"
+                    else: prio="breed"
                 
                 elif pogingen==3:
-                    hbh1=(pos_self.x,pos_self.y-pogingen*res)
-                    hbh2=(pos_self.x,pos_self.y+pogingen*res)
+                    hbh1=(pos_self.x,pos_self.y-tellertje*res)
+                    hbh2=(pos_self.x,pos_self.y+tellertje*res)
                     bhb1=(pos_self.x-tellertje*res,pos_self.y)
                     bhb2=(pos_self.x+tellertje*res,pos_self.y)
 
@@ -216,7 +215,7 @@ class Tikkertje:
                             route.append(bhb2)
                             route.append((pos_self.x+tellertje*res,target.y))
                         tellertje+=1
-                    elif prio=="breed" and hbh2[0]<Scherm_lengte and hbh1[0]*res>0:
+                    elif prio=="breed" and hbh2[1]<Scherm_lengte and hbh1[1]*res>0:
                         if pos_self.y>target.y:
                             route.append(hbh1)
                             route.append((target.x,pos_self.y-tellertje*res))
@@ -229,25 +228,25 @@ class Tikkertje:
                         tellertje=0
 
                 elif pogingen==4:
-                    hbh1=(pos_self.x,pos_self.y-pogingen*res)
-                    hbh2=(pos_self.x,pos_self.y+pogingen*res)
                     bhb1=(pos_self.x-tellertje*res,pos_self.y)
                     bhb2=(pos_self.x+tellertje*res,pos_self.y)
+                    hbh1=(pos_self.x,pos_self.y-tellertje*res)
+                    hbh2=(pos_self.x,pos_self.y+tellertje*res)
 
                     if prio=="breed" and bhb2[0]<Scherm_breedte and bhb1[0]*res>0:
                         if pos_self.x>target.x:
                             route.append(bhb1)
                             route.append((pos_self.x-tellertje*res,target.y))
                         elif pos_self.y<target.y:
-                            route.append[bhb2]
+                            route.append(bhb2)
                             route.append((pos_self.x+tellertje*res,target.y))
                         tellertje+=1
-                    elif prio=="hoog" and hbh2[0]<Scherm_lengte and hbh1[0]*res>0:
+                    elif prio=="hoog" and hbh2[1]<Scherm_lengte and hbh1[1]*res>0:
                         if pos_self.y>target.y:
-                            route.append[hbh1]
-                            route.append[(target.x,pos_self.y-tellertje*res)]
+                            route.append(hbh1)
+                            route.append((target.x,pos_self.y-tellertje*res))
                         elif pos_self.y<target.y:
-                            route.append[hbh2]
+                            route.append(hbh2)
                             route.append((target.x,pos_self.y+tellertje*res))
                         tellertje+=1
                     else: 
@@ -270,7 +269,6 @@ class Tikkertje:
                 elif teller!=len(route) and len(route)>0:
                     niet_nemen.append(route[0])
                     route=[]
-                    print("Muur!")
             elif geen_route==True:
                 goedkeuren=False
 
@@ -280,7 +278,7 @@ class Tikkertje:
             elif rx<pos_self.x and ry==pos_self.y: richting_self[0]="West"
             elif rx==pos_self.x and ry>pos_self.y: richting_self[0]="Zuid"
             elif rx==pos_self.x and ry<pos_self.y: richting_self[0]="Noord"
-            else: richting_self[0]="X"
+            else: richting_self[0]="Noord"
         elif geen_route==True:
             richting_self[0]=richting_self[2] #Ga gewoon dezelfde kant op
         print("Richting renner:", richting_target[0])
@@ -289,7 +287,8 @@ class Tikkertje:
         self.engine_cumulatief(pos_self,richting_self)
 
 
-
+def algoritme_r(self,pos_self,richting_self,pos_target,richting_target):
+    richting_self[2]=richting_self[0]
 
 
 
@@ -324,12 +323,12 @@ if __name__ == '__main__':
         tikkertje.keys_movement(tikkertje.renner,tikkertje.richting_r)   #
         #self.algoritme2(self.renner,self.richting_j,self.jager)
 
-        tikkertje.algoritme_2(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
+        tikkertje.algoritme_j(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
         
         keys=pygame.key.get_pressed()
         if keys[pygame.K_a]:
-            muren.append((6,13))
-            muren.append((6,14))
+            muren.append((13,6))
+            muren.append((14,6))
 
 
 
