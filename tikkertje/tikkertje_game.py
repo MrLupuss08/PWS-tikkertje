@@ -2,21 +2,23 @@ import pygame
 import numpy as np
 import sys
 import math
+import heapq
+from typing import List, Tuple, Dict, Set
 
 pygame.init() #pygame opstarten
 res=30
 bord=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
+      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
+      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
-      0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,
+      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
+      0,4,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,]
@@ -67,6 +69,9 @@ class Tikkertje:
         self.snelheid=1
         self.richting_r=["Noord",0,"X"]
         self.richting_j=["Noord",0,"X"]
+        self.naast_muur=False
+        self.voorkeur = "X"
+        self.slapen = 0
 
     def Beeld(self, scherm):
         scherm.fill(ACHTERGROND_KLEUR)
@@ -99,14 +104,6 @@ class Tikkertje:
         if richting[0]=="Zuid" and coordinaten.y!=Scherm_lengte-60:
             coordinaten.y+=richting[1]*self.snelheid
 
-        if coordinaten.x<0:
-            coordinaten.x=0
-        if coordinaten.x>Scherm_breedte-30:
-            coordinaten.x=Scherm_breedte-30
-        if coordinaten.y<0:
-            coordinaten.y=0
-        if coordinaten.y>Scherm_lengte-60:
-            coordinaten.y=Scherm_lengte-60
         for i in range(len(muren)):
             self.muur.x,self.muur.y=muren[i]
             self.muur.x=self.muur.x*res
@@ -179,6 +176,8 @@ class Tikkertje:
                         wissel=True
         if wissel==True: return "nee"
         else: return "ja"
+
+
 
 
 
@@ -306,13 +305,66 @@ class Tikkertje:
         print("Richting jager:", richting_self[0])
         print("----------------")
 
+    def algoritme_r(self,pos_self,richting_self,pos_target,richting_target,voorkeur,naast_muur,slapen):
+        richting_self[2]=richting_self[0]
+        self_x,self_y=pos_self.x,pos_self.y
+        self_x=int(self_x/res)
+        self_y=int(self_y/res)
+        richtingen=["Noord","Oost","Zuid","West"]        
+        aanliggenden=[(self_x+1,self_y),(self_x-1,self_y),(self_x,self_y+1),(self_x,self_y-1)]
+        if self.slapen == 0:
+            if self.naast_muur==False:
+                for i in range(len(aanliggenden)):
+                    if aanliggenden[i] in muren:
+                        self.naast_muur=True
+                
+            if self.naast_muur==True and self.voorkeur=="X":
+                if richting_self[0] == "Oost" and muren.count((self_x,self_y+1)): self.voorkeur="rechts"
+                elif richting_self[0]=="Oost" and muren.count((self_x,self_y-1)): self.voorkeur="links"
+                elif richting_self[0]=="West" and muren.count((self_x,self_y+1)): self.voorkeur="links"
+                elif richting_self[0]=="West" and muren.count((self_x,self_y-1)): self.voorkeur="rechts"
+                elif richting_self[0]=="Noord" and muren.count((self_x+1,self_y)): self.voorkeur="rechts"
+                elif richting_self[0]=="Noord" and muren.count((self_x-1,self_y)): self.voorkeur="links"
+                elif richting_self[0]=="Zuid" and muren.count((self_x+1,self_y)): self.voorkeur="links"
+                elif richting_self[0]=="Zuid" and muren.count((self_x-1,self_y)): self.voorkeur="rechts"
+                print(self.voorkeur)
 
-    def algoritme_r(self,pos_self,richting_self,pos_target,richting_target):
-        self.algoritme_j(pos_self,richting_self,pos_target,richting_target)
-        if richting_self[0]=="Noord": richting_self[0]="Zuid"
-        elif richting_self[0]=="Zuid": richting_self[0]="Noord"
-        elif richting_self[0]=="Oost": richting_self[0]="West"
-        elif richting_self[0]=="West": richting_self[0]="Oost"
+            if self.naast_muur==True:
+                ri=richtingen.index(richting_self[2])
+                if self.voorkeur=="rechts":
+                    if richting_self[2]=="Noord" and muren.count((self_x+1,int((pos_self.y+27)/30)))==0:
+                        richting_self[0]=richtingen[(ri+1)%4]
+                        self.slapen=20
+                    elif richting_self[2]=="Oost" and muren.count((int((pos_self.x+29)/30),self_y+1))==0:
+                        richting_self[0]=richtingen[(ri+1)%4]
+                        self.slapen=20
+                    elif richting_self[2]=="Zuid" and muren.count((self_x-1,int((pos_self.y-29)/30)))==0:
+                        richting_self[0]=richtingen[(ri+1)%4]
+                        self.slapen=20
+                    elif richting_self[2]=="West" and muren.count((int((pos_self.x-29)/30),self_y-1))==0:
+                        richting_self[0]=richtingen[(ri+1)%4]
+                        self.slapen=20
+                elif self.voorkeur=="links":
+                    if richting_self[2]=="Noord" and muren.count((self_x,self_y+1))==0:
+                        richting_self[0]=richtingen[(ri-1)%4]
+                        self.slapen=20
+                    elif richting_self[2]=="Oost" and muren.count((self_x+1,self_y))==0:
+                        richting_self[0]=richtingen[(ri-1)%4]
+                        self.slapen=20
+                    elif richting_self[2]=="Zuid" and muren.count((self_x+1,self_y))==0:
+                        richting_self[0]=richtingen[(ri-1)%4]
+                        self.slapen=20
+                    elif richting_self[2]=="West" and muren.count((self_x,self_y+1))==0:
+                        richting_self[0]=richtingen[(ri-1)%4]
+                        self.slapen=20
+        else: self.slapen-=1
+
+        print("Richting renner:", richting_target[0])
+        print("Richting jager:", richting_self[0])
+        print("----------------")
+
+
+
 
 
 
@@ -344,10 +396,11 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:  # Als je op het kruisje klikt
                 running=False
 
-        tikkertje.keys_movement(tikkertje.renner,tikkertje.richting_r)   #
-        #tikkertje.algoritme_r(tikkertje.renner,tikkertje.richting_r,tikkertje.jager,tikkertje.richting_j)
+        #tikkertje.keys_movement(tikkertje.renner,tikkertje.richting_r)   #
+        tikkertje.algoritme_r(tikkertje.renner,tikkertje.richting_r,tikkertje.jager,tikkertje.richting_j,tikkertje.voorkeur,tikkertje.naast_muur,tikkertje.slapen)
 
-        tikkertje.algoritme_j(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
+        tikkertje.keys_movement(tikkertje.jager,tikkertje.richting_j) 
+        #tikkertje.algoritme_j(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
 
         tikkertje.engine_cumulatief(tikkertje.renner,tikkertje.richting_r)
         tikkertje.engine_cumulatief(tikkertje.jager,tikkertje.richting_j)
