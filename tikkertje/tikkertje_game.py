@@ -386,27 +386,6 @@ class Tikkertje:
                     elif richting_self[0]=="West" and muren.count((self_x+1,self_y+2))==0:
                         richting_self[0]=richtingen[(ri-1)%4]
                         self.slapen=30
-                """
-                else:
-                    plekken=[]
-                    r=pos_self.copy()
-                    s=richting_self.copy()
-                    self.engine_cumulatief(r,s,)
-                    plekken.append((r.x,r.y))
-                    ri=richtingen.index(s[0])
-                    s[0]=richtingen[(ri+2)%4]
-                    r=pos_self.copy()
-                    self.engine_cumulatief(r,s,)
-                    plekken.append((r.x,r.y))
-                    tijd=[]
-                    for i in range(2):
-                        tijd.append(self.tijd_berekenen((pos_target.x,pos_target.y),plekken[i],richting_target),"jager")
-                    if tijd[0]<tijd[1]:
-                        ri=richtingen.index(richting_self[0])
-                        richting_self[0]=richtingen[(ri+2)%4]
-                        if voorkeur=="links": voorkeur="rechts"
-                        elif voorkeur=="rechts": voorkeur="links"
-                """
                 
             if self.naast_muur==False:
                 self.voorkeur="X"
