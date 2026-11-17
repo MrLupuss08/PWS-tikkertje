@@ -3,25 +3,26 @@ import numpy as np
 import sys
 import math
 import heapq
+from random import randint
 from typing import List, Tuple, Dict, Set
 
 pygame.init() #pygame opstarten
 res=30
 bord=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,
+      0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,
+      0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,4,1,1,1,1,0,0,0,1,1,1,1,0,0,
-      0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,
+      0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,
+      0,0,0,1,1,1,0,0,0,1,1,1,5,0,0,
+      0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,
+      0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,
       0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,]
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]
 pygame.display.set_caption("Tikkertje") #naam van systeem
 Scherm_breedte=math.sqrt(len(bord))*res     #buiten class
 Scherm_lengte=math.sqrt(len(bord))*res+30
@@ -43,13 +44,14 @@ class Tikkertje:
     def __init__(self):
 
         self.muur=pygame.Rect(0,0,res,res)
+        """
         u=-1
         for i in range(2):
             for j in range(15):
                 muren.append((j,u))
                 muren.append((u,j))
             u=15
-
+        """
 
         for i in range(len(bord)):
             if bord[i]==1:
@@ -63,8 +65,16 @@ class Tikkertje:
 
         self.klok = pygame.time.Clock() #snelheid van spel (fps)
 
-        self.renner=pygame.Rect(bord.index(4)%15*30,bord.index(4)//15*30,30,30)
-        self.jager=pygame.Rect(bord.index(5)%15*30,bord.index(5)//15*30,30,30)
+        goedkeuren=True
+        while goedkeuren:
+            waarde=randint(0,224)
+            if bord[waarde]!=1: goedkeuren=False
+        self.renner=pygame.Rect(waarde%15*30,waarde//15*30,30,30)
+        goedkeuren=True
+        while goedkeuren:
+            waarde=randint(0,224)
+            if bord[waarde]!=1: goedkeuren=False
+        self.jager=pygame.Rect(waarde%15*30,waarde//15*30,30,30)
         self.score=0
         self.snelheid=1
         self.richting_r=["Noord",0,"X"]
@@ -90,7 +100,7 @@ class Tikkertje:
         self.y_oud = coordinaten.y
         if richting[0]==richting[2] and richting[1]!=25 and coordinaten==self.jager:
             richting[1]+=1
-        if richting[0]==richting[2] and richting[1]!=20 and coordinaten==self.renner:
+        elif richting[0]==richting[2] and richting[1]!=20 and coordinaten==self.renner:
             richting[1]+=1
         elif richting[0]!=richting[2]:
             richting[1]=1
@@ -141,9 +151,22 @@ class Tikkertje:
         while distance<distance_t:
             time+=1
             distance+=speed
-            if speed!=25 and player==jager: speed+=1
-            elif speed!=20 and player==renner: speed+=1
+            if speed!=25 and player=="jager": speed+=1
+            elif speed!=20 and player=="renner": speed+=1
         return time
+
+    def tijd_berekenen(self,punt1,punt2,snelheid,player):
+        punt1_x,punt1_y=punt1
+        punt2_x,punt2_y=punt2
+        time=0
+        if punt1_x==punt2_x or punt1_y==punt2_y:
+            time=self.calc_time(punt1,punt2,snelheid,player)
+        else:
+            tussenpunt=((punt1_x,punt2_y))
+            time=self.calc_time(punt1,tussenpunt,snelheid,player)+self.calc_time(tussenpunt,punt2,snelheid,player)
+        return time
+
+
 
     def muurchecken(self,punt1,punt2):
         punt1_x,punt1_y=punt1
@@ -152,7 +175,9 @@ class Tikkertje:
         punt1_y=int(punt1_y/res)
         punt2_x=int(punt2_x/res)
         punt2_y=int(punt2_y/res)
-        if punt1_x==punt2_x and punt1_x/res==int(punt1_x/res):
+        if punt1_x==punt2_x and punt1[0]/res==int(punt1[0]/res):
+            vakjes=1
+        elif punt1_y==punt2_y and punt1[1]/res==int(punt1[1]/res):
             vakjes=1
         else: vakjes=2
         wissel=False
@@ -190,178 +215,215 @@ class Tikkertje:
         s=richting_target.copy()
         self.engine_cumulatief(target,s)
 
-        pogingen=1
-        tellertje=0
+        pogingen=0
+        tellertje=1
+        tellertje2=1
+        punten=[]
         breedte=(pos_self.x,target.y)
         hoogte=(target.x,pos_self.y)
         goedkeuren=True
         binnendoor=False
         route=[]
         closed=[]
-        open=[target]
-        while goedkeuren:
+        while goedkeuren==True:
             
-            geen_route=False
-            if pos_self.x==target.x or pos_self.y==target.y:
+            breedte=(pos_self.x,target.y)
+            hoogte=(target.x,pos_self.y)
+            if pogingen==0:
+                if pos_self.x==target.x or pos_self.y==target.y:
+                    route.append((target.x,target.y))
+                pogingen=1
+
+            if pogingen==1:
+                if richting_self[0]=="Noord" or richting_self[0]=="Zuid" or richting_self[0]=="X":
+                    route.append(breedte)
+                elif richting_self[0]=="Oost" or richting_self[0]=="West":
+                    route.append(hoogte)
                 route.append((target.x,target.y))
-            else:
-                breedte=(pos_self.x,target.y)
-                hoogte=(target.x,pos_self.y)
-                if pogingen==1:
-                    if richting_self[0]=="Noord" or richting_self[0]=="Zuid" or richting_self[0]=="X":
-                        route.append(breedte)
-                    elif richting_self[0]=="Oost" or richting_self[0]=="West":
-                        route.append(hoogte)
-                    route.append((target.x,target.y))
-                    pogingen+=1
+                pogingen=2
 
-                elif pogingen==2:    
-                    if closed[0]==breedte:
-                        route.append(hoogte)
-                    if closed[0]==hoogte:
-                        route.append(breedte)
-                    route.append((target.x,target.y))
-                    pogingen+=1
-                    if richting_self[0]=="Noord" or richting_self[0]=="Zuid": prio="hoog"
-                    else: prio="breed"
-                
-                elif pogingen==3:
-                    hbh1=(pos_self.x,pos_self.y-tellertje*res)
-                    hbh2=(pos_self.x,pos_self.y+tellertje*res)
-                    bhb1=(pos_self.x-tellertje*res,pos_self.y)
-                    bhb2=(pos_self.x+tellertje*res,pos_self.y)
+            elif pogingen==2:    
+                if closed[0]==breedte:
+                    route.append(hoogte)
+                if closed[0]==hoogte:
+                    route.append(breedte)
+                route.append((target.x,target.y))
+                pogingen=3
+            
+            elif pogingen==3:
+                print("3")
+                hbhr=[]
+                bhbr=[]
+                for i in range(15):
+                    hbhr.append((pos_self.x,(pos_self.y-tellertje*res)%450))
+                    hbhr.append((target.x,(pos_self.y+tellertje*res)%450))
+                    hbhr.append((target.x,target.y))
+                    muren=False
+                    for i in range(len(hbhr)):
+                        if i==0:
+                            if self.muurchecken((pos_self.x,pos_self.y),hbhr[i])=="nee": muren=True
+                        else:
+                            if self.muurchecken(hbhr[i-1],hbhr[i])=="nee": muren=True
+                    if muren==False: 
+                        punten.append(hbhr[0])
+                    hbhr=[]
 
-                    if prio=="hoog" and bhb2[0]<Scherm_breedte and bhb1[0]*res>0:
-                        if pos_self.x>target.x:
-                            route.append(bhb1)
-                            route.append((pos_self.x-tellertje*res,target.y))
-                        elif pos_self.y<target.y:
-                            route.append(bhb2)
-                            route.append((pos_self.x+tellertje*res,target.y))
-                        tellertje+=1
-                    elif prio=="breed" and hbh2[1]<Scherm_lengte and hbh1[1]*res>0:
-                        if pos_self.y>target.y:
-                            route.append(hbh1)
-                            route.append((target.x,pos_self.y-tellertje*res))
-                        elif pos_self.y<target.y:
-                            route.append(hbh2)
-                            route.append((target.x,pos_self.y+tellertje*res))
-                        tellertje+=1
-                    else: 
-                        pogingen+=1
-                        tellertje=0
+                    bhbr.append(((pos_self.x-tellertje*res)%450,pos_self.y))
+                    bhbr.append(((pos_self.x-tellertje*res)%450,target.y))
+                    bhbr.append((target.x,target.y))
+                    muren=False
+                    for i in range(len(bhbr)):
+                        if i==0:
+                            if self.muurchecken((pos_self.x,pos_self.y),bhbr[i])=="nee": muren=True
+                        else:
+                            if self.muurchecken(bhbr[i-1],bhbr[i])=="nee": muren=True
+                    if muren==False: 
+                        punten.append(bhbr[0])
+                    bhbr=[]
+                    tellertje+=1
+                    tellertje2+=1
+                tijd=[]
+                for i in range(len(punten)):
+                    tijd.append(self.tijd_berekenen((pos_self.x,pos_self.y),punten[i],richting_self,"jager"))
+                route.append(punten[tijd.index(min(tijd))])
+                pogingen=4
+                tellertje=1
 
-                elif pogingen==4:
-                    bhb1=(pos_self.x-tellertje*res,pos_self.y)
-                    bhb2=(pos_self.x+tellertje*res,pos_self.y)
-                    hbh1=(pos_self.x,pos_self.y-tellertje*res)
-                    hbh2=(pos_self.x,pos_self.y+tellertje*res)
-
-                    if prio=="breed" and bhb2[0]<Scherm_breedte and bhb1[0]*res>0:
-                        if pos_self.x>target.x:
-                            route.append(bhb1)
-                            route.append((pos_self.x-tellertje*res,target.y))
-                        elif pos_self.y<target.y:
-                            route.append(bhb2)
-                            route.append((pos_self.x+tellertje*res,target.y))
-                        tellertje+=1
-                    elif prio=="hoog" and hbh2[1]<Scherm_lengte and hbh1[1]*res>0:
-                        if pos_self.y>target.y:
-                            route.append(hbh1)
-                            route.append((target.x,pos_self.y-tellertje*res))
-                        elif pos_self.y<target.y:
-                            route.append(hbh2)
-                            route.append((target.x,pos_self.y+tellertje*res))
-                        tellertje+=1
-                    else: 
-                        pogingen+=1
-                        tellertje=0
-                else: geen_route=True
-
-            if geen_route==False:    
-                teller=0
-                for i in range(len(route)):
-                    if i==0:
-                        if self.muurchecken((pos_self.x,pos_self.y),route[i])=="ja": teller+=1
-                    else:
-                        if self.muurchecken(route[i-1],route[i])=="ja": teller+=1
-                if teller==len(route) and len(route)>0: goedkeuren=False
-                elif teller!=len(route) and len(route)>0:
-                    closed.append(route[0])
-                    route=[]
-            elif geen_route==True:
+            if pogingen>3: break
+               
+            teller=1
+            for i in range(len(route)):
+                if i==0:
+                    if self.muurchecken((pos_self.x,pos_self.y),route[i])=="nee": teller=0
+                else:
+                    if self.muurchecken(route[i-1],route[i])=="nee": teller=0
+            if teller==1 and len(route)>0: 
                 goedkeuren=False
+            elif teller==0 and len(route)>0:
+                closed.append(route[0])
+                route=[]
+                print("NEEEEE!")
 
-        if geen_route==False:
-            rx,ry=route[0]
-            if rx>pos_self.x and ry==pos_self.y: richting_self[0]="Oost"
-            elif rx<pos_self.x and ry==pos_self.y: richting_self[0]="West"
-            elif rx==pos_self.x and ry>pos_self.y: richting_self[0]="Zuid"
-            elif rx==pos_self.x and ry<pos_self.y: richting_self[0]="Noord"
-            else: richting_self[0]="X"
-        elif geen_route==True:
-            richting_self[0]=richting_self[2] #Ga gewoon dezelfde kant op
-        print("Richting renner:", richting_target[0])
+        rx,ry=route[0]
+        if rx>pos_self.x and ry==pos_self.y: richting_self[0]="Oost"
+        elif rx<pos_self.x and ry==pos_self.y: richting_self[0]="West"
+        elif rx==pos_self.x and ry>pos_self.y: richting_self[0]="Zuid"
+        elif rx==pos_self.x and ry<pos_self.y: richting_self[0]="Noord"
+        else: richting_self[0]="X"
+        
+        
         print("Richting jager:", richting_self[0])
         print("----------------")
+
+
+
+
+
+
+
+
+
 
     def algoritme_r(self,pos_self,richting_self,pos_target,richting_target,voorkeur,naast_muur,slapen):
         richting_self[2]=richting_self[0]
         self_x,self_y=pos_self.x,pos_self.y
-        self_x=int(self_x/res)
-        self_y=int(self_y/res)
+        self_x=int((self_x)/res)
+        self_y=int((self_y)/res)
         richtingen=["Noord","Oost","Zuid","West"]        
-        aanliggenden=[(self_x+1,self_y),(self_x-1,self_y),(self_x,self_y+1),(self_x,self_y-1)]
+        aanliggenden=[(int((pos_self.x+40)/30),self_y),(self_x-1,self_y),(self_x,int((pos_self.y+40)/30)),(self_x,self_y-1)]
         if self.slapen == 0:
             if self.naast_muur==False:
-                for i in range(len(aanliggenden)):
+                for i in range(4):
                     if aanliggenden[i] in muren:
                         self.naast_muur=True
+                if self.naast_muur==True:
+                    ri=richtingen.index(richting_self[2])
+                    if aanliggenden[0] in muren and richting_self[0]=="Oost": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    elif aanliggenden[0] in muren and richting_self[0]=="West": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    elif aanliggenden[1] in muren and richting_self[0]=="Oost": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    elif aanliggenden[1] in muren and richting_self[0]=="West": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    elif aanliggenden[2] in muren and richting_self[0]=="Noord": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    elif aanliggenden[2] in muren and richting_self[0]=="Zuid": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    elif aanliggenden[3] in muren and richting_self[0]=="Noord": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    elif aanliggenden[3] in muren and richting_self[0]=="Zuid": richting_self[0]=richtingen[(ri+1)%4]; self.slapen=30
+                    print(richting_self[0])
                 
             if self.naast_muur==True and self.voorkeur=="X":
-                if richting_self[0] == "Oost" and muren.count((self_x,self_y+1)): self.voorkeur="rechts"
+                if richting_self[0] == "Oost" and muren.count((self_x,int((pos_self.y+40)/30))): self.voorkeur="rechts"
                 elif richting_self[0]=="Oost" and muren.count((self_x,self_y-1)): self.voorkeur="links"
-                elif richting_self[0]=="West" and muren.count((self_x,self_y+1)): self.voorkeur="links"
+                elif richting_self[0]=="West" and muren.count((self_x,int((pos_self.y+40)/30))): self.voorkeur="links"
                 elif richting_self[0]=="West" and muren.count((self_x,self_y-1)): self.voorkeur="rechts"
-                elif richting_self[0]=="Noord" and muren.count((self_x+1,self_y)): self.voorkeur="rechts"
+                elif richting_self[0]=="Noord" and muren.count((int((pos_self.x+40)/30),self_y)): self.voorkeur="rechts"
                 elif richting_self[0]=="Noord" and muren.count((self_x-1,self_y)): self.voorkeur="links"
-                elif richting_self[0]=="Zuid" and muren.count((self_x+1,self_y)): self.voorkeur="links"
+                elif richting_self[0]=="Zuid" and muren.count((int((pos_self.x+40)/30),self_y)): self.voorkeur="links"
                 elif richting_self[0]=="Zuid" and muren.count((self_x-1,self_y)): self.voorkeur="rechts"
-                print(self.voorkeur)
-
-            if self.naast_muur==True:
-                ri=richtingen.index(richting_self[2])
+                
+            elif self.naast_muur==True:
+                ri=richtingen.index(richting_self[0])
                 if self.voorkeur=="rechts":
-                    if richting_self[2]=="Noord" and muren.count((self_x+1,int((pos_self.y+27)/30)))==0:
+                    if richting_self[0]=="Noord" and muren.count((self_x+2,self_y+1))==0:
                         richting_self[0]=richtingen[(ri+1)%4]
-                        self.slapen=20
-                    elif richting_self[2]=="Oost" and muren.count((int((pos_self.x+29)/30),self_y+1))==0:
+                        self.slapen=30
+                    elif richting_self[0]=="Oost" and muren.count((self_x,self_y+2))==0:
                         richting_self[0]=richtingen[(ri+1)%4]
-                        self.slapen=20
-                    elif richting_self[2]=="Zuid" and muren.count((self_x-1,int((pos_self.y-29)/30)))==0:
+                        self.slapen=30
+                    elif richting_self[0]=="Zuid" and muren.count((self_x-2,self_y))==0:
                         richting_self[0]=richtingen[(ri+1)%4]
-                        self.slapen=20
-                    elif richting_self[2]=="West" and muren.count((int((pos_self.x-29)/30),self_y-1))==0:
+                        self.slapen=30
+                    elif richting_self[0]=="West" and muren.count((self_x+1,self_y-2))==0:
                         richting_self[0]=richtingen[(ri+1)%4]
-                        self.slapen=20
+                        self.slapen=30
                 elif self.voorkeur=="links":
-                    if richting_self[2]=="Noord" and muren.count((self_x,self_y+1))==0:
+                    if richting_self[0]=="Noord" and muren.count((self_x-2,self_y+1))==0:
                         richting_self[0]=richtingen[(ri-1)%4]
-                        self.slapen=20
-                    elif richting_self[2]=="Oost" and muren.count((self_x+1,self_y))==0:
+                        self.slapen=30
+                    elif richting_self[0]=="Oost" and muren.count((self_x,self_y-2))==0:
                         richting_self[0]=richtingen[(ri-1)%4]
-                        self.slapen=20
-                    elif richting_self[2]=="Zuid" and muren.count((self_x+1,self_y))==0:
+                        self.slapen=30
+                    elif richting_self[0]=="Zuid" and muren.count((self_x+2,self_y))==0:
                         richting_self[0]=richtingen[(ri-1)%4]
-                        self.slapen=20
-                    elif richting_self[2]=="West" and muren.count((self_x,self_y+1))==0:
+                        self.slapen=30
+                    elif richting_self[0]=="West" and muren.count((self_x+1,self_y+2))==0:
                         richting_self[0]=richtingen[(ri-1)%4]
-                        self.slapen=20
+                        self.slapen=30
+                """
+                else:
+                    plekken=[]
+                    r=pos_self.copy()
+                    s=richting_self.copy()
+                    self.engine_cumulatief(r,s,)
+                    plekken.append((r.x,r.y))
+                    ri=richtingen.index(s[0])
+                    s[0]=richtingen[(ri+2)%4]
+                    r=pos_self.copy()
+                    self.engine_cumulatief(r,s,)
+                    plekken.append((r.x,r.y))
+                    tijd=[]
+                    for i in range(2):
+                        tijd.append(self.tijd_berekenen((pos_target.x,pos_target.y),plekken[i],richting_target),"jager")
+                    if tijd[0]<tijd[1]:
+                        ri=richtingen.index(richting_self[0])
+                        richting_self[0]=richtingen[(ri+2)%4]
+                        if voorkeur=="links": voorkeur="rechts"
+                        elif voorkeur=="rechts": voorkeur="links"
+                """
+                
+            if self.naast_muur==False:
+                self.voorkeur="X"
+                tijd=[]
+                for i in range(len(muren)):
+                    mx,my=muren[i]
+                    tijd.append(self.tijd_berekenen((pos_self.x,pos_self.y),(mx*30+15,my*30+15),richting_self,"renner"))
+                target=muren[tijd.index(min(tijd))]
+                target=(target[0]*30+15,target[1]*30+15)
+                if target[0]!=pos_self.x and target[1]!=pos_self.y:
+                    target=(pos_self.x,target[1])
+                tx,ty=target
+                if tx>pos_self.x and ty==pos_self.y: richting_self[0]="Oost"
+                elif tx<pos_self.x and ty==pos_self.y: richting_self[0]="West"
+                elif tx==pos_self.x and ty>pos_self.y: richting_self[0]="Zuid"
+                elif tx==pos_self.x and ty<pos_self.y: richting_self[0]="Noord"
         else: self.slapen-=1
-
-        print("Richting renner:", richting_target[0])
-        print("Richting jager:", richting_self[0])
-        print("----------------")
 
 
 
@@ -396,21 +458,14 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:  # Als je op het kruisje klikt
                 running=False
 
-        #tikkertje.keys_movement(tikkertje.renner,tikkertje.richting_r)   #
+        #tikkertje.keys_movement(tikkertje.renner,tikkertje.richting_r)
         tikkertje.algoritme_r(tikkertje.renner,tikkertje.richting_r,tikkertje.jager,tikkertje.richting_j,tikkertje.voorkeur,tikkertje.naast_muur,tikkertje.slapen)
 
-        tikkertje.keys_movement(tikkertje.jager,tikkertje.richting_j) 
-        #tikkertje.algoritme_j(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
+        #tikkertje.keys_movement(tikkertje.jager,tikkertje.richting_j) 
+        tikkertje.algoritme_j(tikkertje.jager,tikkertje.richting_j,tikkertje.renner,tikkertje.richting_r)
 
         tikkertje.engine_cumulatief(tikkertje.renner,tikkertje.richting_r)
         tikkertje.engine_cumulatief(tikkertje.jager,tikkertje.richting_j)
-        
-        keys=pygame.key.get_pressed()
-        if keys[pygame.K_a]:
-            muren.append((13,6))
-            muren.append((14,6))
-
-
 
         tikkertje.score+=1/60
         tikkertje.Beeld(scherm)
